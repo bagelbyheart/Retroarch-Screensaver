@@ -12,7 +12,7 @@ import os
 import random
 import subprocess
 import pygame
-from multiprocessing import Process, Value
+from multiprocessing import Process
 
 
 def path_listing(directory):
@@ -30,27 +30,31 @@ def pick_random(listing):
     return(selection)
 
 
-def start_roms(ra_path, core_file, rom_dir, timeout):
+def rom_loop(ra_path, core_file, rom_dir, timeout):
+    # this doesn't currently end the RA process when the parent python process
+    # ends, and I'm not sure on the best way to handle that. Maybe also run the
+    # subprocess in a multiprocess container?
     roms = path_listing(rom_dir)
     while len(roms) > 0:
+        rom = pick_random(roms)
+        print(f'{len(roms)}: {rom}')
         try:
-            rom = pick_random(roms)
-            print(f'{len(roms)}: {rom}')
             subprocess.run([ra_path, '-L', core_file, rom], timeout=timeout)
-        except:
+        except subprocess.TimeoutExpired:
             pass
-    start_roms(ra_path, core_file, rom_dir, timeout)
+        except:
+            print("Exception!")
+    rom_loop(ra_path, core_file, rom_dir, timeout)
 
 
-# Input Handler Experiment.
 def input_loop(ra_path, core_file, rom_dir, timeout):
     os.environ["SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
     os.environ["SDL_VIDEODRIVER"] = "dummy"
+    pygame.init()
     pygame.joystick.init()
     joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
-    pygame.init()
     display = pygame.display.set_mode((1,1))
-    game_loop = Process(target=start_roms, args=(ra_path, core_file, rom_dir, timeout))
+    game_loop = Process(target=rom_loop, args=(ra_path, core_file, rom_dir, timeout))
     game_loop.start()
     while True:
         for event in pygame.event.get():
@@ -58,7 +62,9 @@ def input_loop(ra_path, core_file, rom_dir, timeout):
                 joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
             if event.type == pygame.JOYBUTTONUP:
                 print("input seen!")
-                game_loop.kill()
+                # this is successfully killing python, but not the retroarch
+                # child process and I don't know how to fix that
+                game_loop.terminate()
                 exit()
 
 
@@ -74,7 +80,8 @@ def main(args):
     else:
         print(f'{args.rom_dir} is not a directory.')
         exit(1)
-    timeout = 120
+    # replace this with an optional cmdline argument
+    timeout = 30
     if os.path.isfile(os.path.join(retroarch_dir, 'cores', args.core_file)):
         core_file = os.path.join(retroarch_dir, 'cores', args.core_file)
     else:
@@ -84,8 +91,6 @@ def main(args):
     ra_path = os.path.join(retroarch_dir, 'retroarch.exe')
     input_checker = Process(target=input_loop, args=(ra_path, core_file, rom_dir, timeout))
     input_checker.start()
-    # input_loop()
-    # start_roms(ra_path, core_file, rom_dir, timeout)
 
 
 if __name__ == "__main__":
