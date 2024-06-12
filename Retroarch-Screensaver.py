@@ -4,7 +4,7 @@ Use Retroarch as a screensaver to show off your ROM collection.
 """
 
 __author__ = "Stephen Ancona"
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __license__ = "The Unlicense"
 
 import argparse
@@ -13,6 +13,7 @@ import random
 import subprocess
 import pygame
 from multiprocessing import Process
+from time import time
 
 
 def path_listing(directory):
@@ -30,40 +31,39 @@ def pick_random(listing):
     return(selection)
 
 
+def start_pygame():
+    os.environ["SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    pygame.init()
+
+
 def rom_loop(ra_path, core_file, rom_dir, timeout):
     # this doesn't currently end the RA process when the parent python process
     # ends, and I'm not sure on the best way to handle that. Maybe also run the
     # subprocess in a multiprocess container?
+    global retroarch
+    start_time = int(round(time()))
+    end_time = start_time + timeout
     roms = path_listing(rom_dir)
     while len(roms) > 0:
         rom = pick_random(roms)
         print(f'{len(roms)}: {rom}')
         try:
-            subprocess.run([ra_path, '-L', core_file, rom], timeout=timeout)
-        except subprocess.TimeoutExpired:
-            pass
-        except:
-            print("Exception!")
+            retroarch = subprocess.Popen([ra_path, '-L', core_file, rom])
+        except None:
+            print('Exception!')
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.JOYDEVICEADDED:
+                    joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+                if event.type == pygame.JOYBUTTONUP:
+                    print("input seen!")
+                    end_time = int(round(time())) + 300
+            if int(round(time())) >= end_time:
+                retroarch.terminate()
+                end_time = int(round(time())) + timeout
+                break
     rom_loop(ra_path, core_file, rom_dir, timeout)
-
-
-def input_loop(ra_path, core_file, rom_dir, timeout):
-    os.environ["SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
-    os.environ["SDL_VIDEODRIVER"] = "dummy"
-    pygame.init()
-    joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
-    game_loop = Process(target=rom_loop, args=(ra_path, core_file, rom_dir, timeout))
-    game_loop.start()
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.JOYDEVICEADDED:
-                joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
-            if event.type == pygame.JOYBUTTONUP:
-                print("input seen!")
-                # this is successfully killing python, but not the retroarch
-                # child process and I don't know how to fix that
-                game_loop.terminate()
-                exit()
 
 
 def main(args):
@@ -87,8 +87,8 @@ def main(args):
         exit(1)
     print(args)
     ra_path = os.path.join(retroarch_dir, 'retroarch.exe')
-    input_checker = Process(target=input_loop, args=(ra_path, core_file, rom_dir, timeout))
-    input_checker.start()
+    start_pygame()
+    rom_loop(ra_path, core_file, rom_dir, timeout)
 
 
 if __name__ == "__main__":
@@ -108,4 +108,5 @@ if __name__ == "__main__":
     try:
         main(args)
     except KeyboardInterrupt:
+        retroarch.kill()
         print("Ending!")
