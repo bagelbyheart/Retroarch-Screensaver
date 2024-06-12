@@ -40,6 +40,21 @@ def start_roms(ra_path, core_file, rom_dir, timeout):
     start_roms(ra_path, core_file, rom_dir, timeout)
 
 
+# Input Handler Experiment.
+# import pygame
+# def screen_loop(ra_path, core_file, rom_dir, timeout):
+#     os.environ["SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
+#     os.environ["SDL_VIDEODRIVER"] = "dummy"
+#     pygame.joystick.init()
+#     joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+#     pygame.init()
+#     display = pygame.display.set_mode((1,1))
+#     while True:
+#         for event in pygame.event.get():
+#             if event.type == pygame.JOYBUTTONUP:
+#                 exit()
+
+
 def main(args):
     """ Main entry point of the app """
     if os.path.isdir(args.retroarch_dir):
