@@ -11,6 +11,8 @@ import argparse
 import os
 import random
 import subprocess
+import pygame
+from multiprocessing import Process, Value
 
 
 def path_listing(directory):
@@ -41,18 +43,23 @@ def start_roms(ra_path, core_file, rom_dir, timeout):
 
 
 # Input Handler Experiment.
-# import pygame
-# def screen_loop(ra_path, core_file, rom_dir, timeout):
-#     os.environ["SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
-#     os.environ["SDL_VIDEODRIVER"] = "dummy"
-#     pygame.joystick.init()
-#     joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
-#     pygame.init()
-#     display = pygame.display.set_mode((1,1))
-#     while True:
-#         for event in pygame.event.get():
-#             if event.type == pygame.JOYBUTTONUP:
-#                 exit()
+def input_loop(ra_path, core_file, rom_dir, timeout):
+    os.environ["SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    pygame.joystick.init()
+    joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+    pygame.init()
+    display = pygame.display.set_mode((1,1))
+    game_loop = Process(target=start_roms, args=(ra_path, core_file, rom_dir, timeout))
+    game_loop.start()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.JOYDEVICEADDED:
+                joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+            if event.type == pygame.JOYBUTTONUP:
+                print("input seen!")
+                game_loop.kill()
+                exit()
 
 
 def main(args):
@@ -75,7 +82,10 @@ def main(args):
         exit(1)
     print(args)
     ra_path = os.path.join(retroarch_dir, 'retroarch.exe')
-    start_roms(ra_path, core_file, rom_dir, timeout)
+    input_checker = Process(target=input_loop, args=(ra_path, core_file, rom_dir, timeout))
+    input_checker.start()
+    # input_loop()
+    # start_roms(ra_path, core_file, rom_dir, timeout)
 
 
 if __name__ == "__main__":
