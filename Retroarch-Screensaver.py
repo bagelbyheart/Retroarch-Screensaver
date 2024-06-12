@@ -4,7 +4,7 @@ Use Retroarch as a screensaver to show off your ROM collection.
 """
 
 __author__ = "Stephen Ancona"
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __license__ = "The Unlicense"
 
 import argparse
@@ -48,17 +48,26 @@ def rom_loop(ra_path, core_file, rom_dir, timeout):
     while len(roms) > 0:
         rom = pick_random(roms)
         print(f'{len(roms)}: {rom}')
+        print(f'next refresh at {end_time}')
         try:
             retroarch = subprocess.Popen([ra_path, '-L', core_file, rom])
         except None:
             print('Exception!')
         while True:
+            if retroarch.poll() is not None:
+                retroarch.terminate()
+                end_time = int(round(time())) + timeout
+                break
             for event in pygame.event.get():
                 if event.type == pygame.JOYDEVICEADDED:
                     joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
-                if event.type == pygame.JOYBUTTONUP:
-                    print("input seen!")
-                    end_time = int(round(time())) + 300
+                if (
+                        event.type == pygame.JOYBUTTONUP or
+                        event.type == pygame.JOYHATMOTION or
+                        event.type == pygame.JOYAXISMOTION
+                    ):
+                    end_time = int(round(time())) + 600
+                    print(f'input seen; next refresh at {end_time}')
             if int(round(time())) >= end_time:
                 retroarch.terminate()
                 end_time = int(round(time())) + timeout
@@ -79,7 +88,7 @@ def main(args):
         print(f'{args.rom_dir} is not a directory.')
         exit(1)
     # replace this with an optional cmdline argument
-    timeout = 30
+    timeout = args.timeout
     if os.path.isfile(os.path.join(retroarch_dir, 'cores', args.core_file)):
         core_file = os.path.join(retroarch_dir, 'cores', args.core_file)
     else:
@@ -97,6 +106,10 @@ if __name__ == "__main__":
     parser.add_argument("retroarch_dir", help="Retroarch install directory")
     parser.add_argument("rom_dir", help="ROM file directory")
     parser.add_argument("core_file", help="Libretro core file")
+    parser.add_argument(
+        "-t", "--timeout", action="store", dest="timeout", type=int,
+        help="Time between game changes", default=300
+    )
     # Optional argument which requires a parameter (eg. -d test)
     # parser.add_argument("-n", "--name", action="store", dest="name")
     # Specify output of "--version"
