@@ -7,6 +7,7 @@ __author__ = "Stephen Ancona"
 __version__ = "0.3.0"
 __license__ = "The Unlicense"
 
+
 from sys import exit
 import argparse
 import os
@@ -14,6 +15,14 @@ import random
 import subprocess
 import pygame
 from time import time
+
+
+"""
+TODO:
+- [PEP 257: Docstring Conventions](https://peps.python.org/pep-0257/)
+- Library Import as a more generic launch random y thing for x time
+- Reduce messages printed to screen/add proper debugging
+"""
 
 
 def path_listing(directory):
@@ -28,7 +37,7 @@ def path_listing(directory):
 def pick_random(listing):
     random.shuffle(listing)
     selection = listing.pop()
-    return(selection)
+    return (selection)
 
 
 def start_pygame():
@@ -60,12 +69,15 @@ def rom_loop(ra_path, core_file, rom_dir, timeout):
                 break
             for event in pygame.event.get():
                 if event.type == pygame.JOYDEVICEADDED:
-                    joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+                    [
+                        pygame.joystick.Joystick(x)
+                        for x in range(pygame.joystick.get_count())
+                    ]
                 if (
                         event.type == pygame.JOYBUTTONUP or
                         event.type == pygame.JOYHATMOTION or
                         event.type == pygame.JOYAXISMOTION
-                    ):
+                        ):
                     end_time = int(round(time())) + 600
                     print(f'input seen; next refresh at {end_time}')
             if int(round(time())) >= end_time:
