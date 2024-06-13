@@ -43,3 +43,12 @@ options:
 
 The only python library outside of the standard library used is `pygame2`. This
 is required "pick up and play" functionality.
+
+## Build Process
+
+This can be built for executable distribution using `PyInstaller`, I use the
+following command to build it in my environment:
+
+```shell
+python -m PyInstaller Retroarch-Screensaver.py
+```

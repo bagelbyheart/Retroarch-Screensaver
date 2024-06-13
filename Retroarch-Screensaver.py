@@ -4,15 +4,15 @@ Use Retroarch as a screensaver to show off your ROM collection.
 """
 
 __author__ = "Stephen Ancona"
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 __license__ = "The Unlicense"
 
+from sys import exit
 import argparse
 import os
 import random
 import subprocess
 import pygame
-from multiprocessing import Process
 from time import time
 
 
