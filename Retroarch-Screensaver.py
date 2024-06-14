@@ -107,7 +107,7 @@ def main(args):
         print(f'{args.core_file} is not a file.')
         exit(1)
     print(args)
-    ra_path = os.path.join(retroarch_dir, 'retroarch.exe')
+    ra_path = os.path.join(retroarch_dir, 'retroarch')
     start_pygame()
     rom_loop(ra_path, core_file, rom_dir, timeout)
 
