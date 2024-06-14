@@ -46,7 +46,7 @@ def start_pygame():
     pygame.init()
 
 
-def rom_loop(ra_path, core_file, rom_dir, timeout):
+def rom_loop(retroarch_bin, core_file, rom_dir, timeout):
     # this doesn't currently end the RA process when the parent python process
     # ends, and I'm not sure on the best way to handle that. Maybe also run the
     # subprocess in a multiprocess container?
@@ -59,7 +59,7 @@ def rom_loop(ra_path, core_file, rom_dir, timeout):
         print(f'{len(roms)}: {rom}')
         print(f'next refresh at {end_time}')
         try:
-            retroarch = subprocess.Popen([ra_path, '-L', core_file, rom])
+            retroarch = subprocess.Popen([retroarch_bin, '-L', core_file, rom])
         except None:
             print('Exception!')
         while True:
@@ -84,15 +84,15 @@ def rom_loop(ra_path, core_file, rom_dir, timeout):
                 retroarch.terminate()
                 end_time = int(round(time())) + timeout
                 break
-    rom_loop(ra_path, core_file, rom_dir, timeout)
+    rom_loop(retroarch_bin, core_file, rom_dir, timeout)
 
 
 def main(args):
     """ Main entry point of the app """
-    if os.path.isdir(args.retroarch_dir):
-        retroarch_dir = args.retroarch_dir
+    if os.path.isfile(args.retroarch_bin):
+        retroarch_bin = args.retroarch_bin
     else:
-        print(f'{args.retroarch_dir} is not a directory.')
+        print(f'{args.retroarch_bin} is not a directory.')
         exit(1)
     if os.path.isdir(args.rom_dir):
         rom_dir = args.rom_dir
@@ -101,30 +101,26 @@ def main(args):
         exit(1)
     # replace this with an optional cmdline argument
     timeout = args.timeout
-    if os.path.isfile(os.path.join(retroarch_dir, 'cores', args.core_file)):
-        core_file = os.path.join(retroarch_dir, 'cores', args.core_file)
+    if os.path.isfile(args.core_file):
+        core_file = args.core_file
     else:
         print(f'{args.core_file} is not a file.')
         exit(1)
     print(args)
-    ra_path = os.path.join(retroarch_dir, 'retroarch')
     start_pygame()
-    rom_loop(ra_path, core_file, rom_dir, timeout)
+    rom_loop(retroarch_bin, core_file, rom_dir, timeout)
 
 
 if __name__ == "__main__":
     """ This is executed when run from the command line """
     parser = argparse.ArgumentParser()
-    parser.add_argument("retroarch_dir", help="Retroarch install directory")
+    parser.add_argument("retroarch_bin", help="Retroarch binary")
     parser.add_argument("rom_dir", help="ROM file directory")
     parser.add_argument("core_file", help="Libretro core file")
     parser.add_argument(
         "-t", "--timeout", action="store", dest="timeout", type=int,
         help="Time between game changes", default=300
     )
-    # Optional argument which requires a parameter (eg. -d test)
-    # parser.add_argument("-n", "--name", action="store", dest="name")
-    # Specify output of "--version"
     parser.add_argument(
         "--version",
         action="version",
