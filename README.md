@@ -25,10 +25,12 @@ And takes one optional argument:
 ## Help Output
 
 ```output
-usage: Retroarch-Screensaver.py [-h] [-t TIMEOUT] [--version] retroarch_dir rom_dir core_file
+pygame 2.5.2 (SDL 2.28.3, Python 3.12.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+usage: Retroarch-Screensaver.py [-h] [-t TIMEOUT] [--version] retroarch_bin rom_dir core_file
 
 positional arguments:
-  retroarch_dir         Retroarch install directory
+  retroarch_bin         Retroarch binary
   rom_dir               ROM file directory
   core_file             Libretro core file
 
@@ -41,8 +43,9 @@ options:
 
 ## Requirements
 
-The only python library outside of the standard library used is `pygame2`. This
-is required "pick up and play" functionality.
+The only python library outside of the standard library used is `pygame` version
+2.5.2. This is required "pick up and play" functionality, and has been tested
+with SDL 2.28.3.
 
 ## Build Process
 

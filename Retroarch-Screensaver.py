@@ -44,6 +44,10 @@ def start_pygame():
     os.environ["SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
     os.environ["SDL_VIDEODRIVER"] = "dummy"
     pygame.init()
+    [
+        pygame.joystick.Joystick(x)
+        for x in range(pygame.joystick.get_count())
+    ]
 
 
 def rom_loop(retroarch_bin, core_file, rom_dir, timeout):
