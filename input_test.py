@@ -16,7 +16,7 @@ def start_pygame():
     os.environ["SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
     os.environ["SDL_VIDEODRIVER"] = "dummy"
     pygame.init()
-    [
+    joysticks = [
         pygame.joystick.Joystick(x)
         for x in range(pygame.joystick.get_count())
     ]
@@ -25,9 +25,8 @@ def start_pygame():
 def input_loop():
     while True:
         for event in pygame.event.get():
-            print(f'{event}')
             if event.type == pygame.JOYDEVICEADDED:
-                [
+                joysticks = [
                     pygame.joystick.Joystick(x)
                     for x in range(pygame.joystick.get_count())
                 ]
